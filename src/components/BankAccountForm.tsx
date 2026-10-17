@@ -9,7 +9,7 @@ import { useHistory } from "react-router";
 const validationSchema = object({
   bankName: string().min(5, "Must contain at least 5 characters").required("Enter a bank name"),
   routingNumber: string()
-    .length(9, "Must contain a valid routing number")
+    .length(9, "Routing number must have exactly 9 digits")
     .required("Enter a valid bank routing number"),
   accountNumber: string()
     .min(9, "Must contain at least 9 digits")
