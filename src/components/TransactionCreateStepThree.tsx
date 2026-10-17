@@ -97,7 +97,7 @@ const TransactionCreateStepThree: React.FC<TransactionCreateStepThreeProps> = ({
         <Grid container direction="row" justifyContent="center" alignItems="center">
           <Grid item>
             <Typography component="h2" variant="h6" color="primary" gutterBottom>
-              {transactionDetails?.transactionType === "payment" ? "Paid " : "Requested "}
+              {transactionDetails?.transactionType === "payment" ? "Sent " : "Requested "}
               {transactionDetails?.amount &&
                 formatAmount(parseInt(transactionDetails.amount, 10) * 100)}{" "}
               for {transactionDetails?.description}
