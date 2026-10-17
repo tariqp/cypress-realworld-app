@@ -3,7 +3,21 @@ import { styled } from "@mui/material/styles";
 import NumberFormat from "react-number-format";
 import { Formik, Form, Field, FieldProps } from "formik";
 import { string, object, number } from "yup";
-import { Paper, Typography, Button, Grid, Container, Avatar, Box, TextField } from "@mui/material";
+import {
+  Paper,
+  Typography,
+  Button,
+  Grid,
+  Container,
+  Avatar,
+  Box,
+  TextField,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+} from "@mui/material";
 import { User } from "../models";
 
 const PREFIX = "TransactionCreateStepTwo";
@@ -86,6 +100,14 @@ const TransactionCreateStepTwo: React.FC<TransactionCreateStepTwoProps> = ({
   showSnackbar,
 }) => {
   const [transactionType, setTransactionType] = useState<string>();
+  // A transaction is reviewed before it is created: the dialog shows what will happen.
+  const [review, setReview] = useState<{
+    transactionType: string | undefined;
+    values: FormValues;
+    done: (submitting: boolean) => void;
+  } | null>(null);
+  const amountText = (amount: number | "") =>
+    amount === "" ? "" : `$${Number(amount).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   const initialValues: FormValues = {
     amount: "",
     description: "",
@@ -115,15 +137,10 @@ const TransactionCreateStepTwo: React.FC<TransactionCreateStepTwoProps> = ({
           validateOnMount={true}
           onSubmit={(values, { setSubmitting }) => {
             setSubmitting(true);
+            setReview({ transactionType, values, done: setSubmitting });
 
             // reset transactionType
             setTransactionType(undefined);
-
-            createTransaction({ transactionType, ...values });
-            showSnackbar({
-              severity: "success",
-              message: "Transaction Submitted!",
-            });
           }}
         >
           {({ isValid, isSubmitting }) => (
@@ -207,6 +224,45 @@ const TransactionCreateStepTwo: React.FC<TransactionCreateStepTwoProps> = ({
           )}
         </Formik>
       </Container>
+      <Dialog open={Boolean(review)} data-test="transaction-review-dialog">
+        <DialogTitle>
+          {review?.transactionType === "request" ? "Review request" : "Review payment"}
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            {review?.transactionType === "request"
+              ? `Request ${amountText(review.values.amount)} from ${receiver.firstName} ${receiver.lastName} for "${review.values.description}"?`
+              : `Pay ${amountText(review?.values.amount ?? "")} to ${receiver.firstName} ${receiver.lastName} for "${review?.values.description}"?`}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            data-test="transaction-review-back"
+            onClick={() => {
+              review?.done(false);
+              setReview(null);
+            }}
+          >
+            Back
+          </Button>
+          <Button
+            variant="contained"
+            color="primary"
+            data-test="transaction-review-confirm"
+            onClick={() => {
+              if (!review) return;
+              createTransaction({ transactionType: review.transactionType, ...review.values });
+              showSnackbar({
+                severity: "success",
+                message: "Transaction Submitted!",
+              });
+              setReview(null);
+            }}
+          >
+            Confirm
+          </Button>
+        </DialogActions>
+      </Dialog>
     </StyledPaper>
   );
 };
